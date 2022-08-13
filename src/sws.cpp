@@ -43,7 +43,11 @@ void sws::server::receive(void *buf, int len, recv_callback cb) {
 			throw std::runtime_error("Error receiving bytes");
 		}
 
-		cb(bytes_recvd);
+		LOG_PRINTF("Received request from ");
+		LOG_ADDR(&client_addr);
+		LOG_PRINTF("\n");
+
+		cb(&client_addr, bytes_recvd);
 	}
 }
 
@@ -62,7 +66,7 @@ void sws::server::bind_to_first_possible(struct addrinfo *suitable_addresses) {
 		}
 
 		LOG_PRINTF("Binding to ");
-		LOG_ADDR(ai);
+		LOG_ADDR(ai->ai_addr);
 		LOG_PRINTF("...\n");
 
 		break;

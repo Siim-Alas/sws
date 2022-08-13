@@ -12,7 +12,7 @@
 #include "log.h"
 
 namespace sws {
-	typedef void (*recv_callback)(int);
+	typedef void (*recv_callback)(struct sockaddr *, int);
 
 	class server {
 	public:

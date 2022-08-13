@@ -3,7 +3,7 @@
 
 char *buf;
 
-void recv_cb(int bytes_received) {
+void recv_cb(struct sockaddr *client_address, int bytes_received) {
 	printf("Received data!\n");
 	fwrite(buf, 1, bytes_received, stdout);
 }

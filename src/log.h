@@ -5,12 +5,12 @@
 
 #include <arpa/inet.h>
 
-#define LOG_ADDR(addr_info_ptr) { \
+#define LOG_ADDR(sockaddr_ptr) { \
 	char s[INET6_ADDRSTRLEN]; \
-	void *addr = (addr_info_ptr->ai_family == AF_INET) ? \
-		(void*)&(((struct sockaddr_in*)addr_info_ptr->ai_addr)->sin_addr) : \
-		(void*)&(((struct sockaddr_in6*)addr_info_ptr->ai_addr)->sin6_addr); \
-	inet_ntop(addr_info_ptr->ai_family, addr, s, sizeof(s)); \
+	void *addr = ((sockaddr_ptr)->sa_family == AF_INET) ? \
+		(void*)&(((struct sockaddr_in*)(sockaddr_ptr))->sin_addr) : \
+		(void*)&(((struct sockaddr_in6*)(sockaddr_ptr))->sin6_addr); \
+	inet_ntop((sockaddr_ptr)->sa_family, addr, s, sizeof(s)); \
 	printf("%s", s); \
 }
 
@@ -18,7 +18,7 @@
 
 #else
 
-#define LOG_ADDR(addr_info_ptr)
+#define LOG_ADDR(sockaddr_ptr)
 #define LOG_PRINTF(x)
 
 #endif
