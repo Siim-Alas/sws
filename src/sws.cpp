@@ -2,7 +2,7 @@
 #include "sws.h"
 
 sws::server::server(const char *service) {
-	struct addrinfo *suitable_addresses = sws::get_suitable_addresses(service);
+	addrinfo *suitable_addresses = sws::get_suitable_addresses(service);
 	if (suitable_addresses == NULL) {
 		throw std::runtime_error("Failed to get a suitable address");
 	}
@@ -14,23 +14,26 @@ sws::server::server(const char *service) {
 	if (socketfd == -1) {
 		throw std::runtime_error("Failed to bind to a socket");
 	}
+
+	buf = new char[config::BUFSIZE];
 }
 
 sws::server::~server() {
+	delete[] buf;
 	close(socketfd);
 }
 
-void sws::server::receive(void *buf, int len, recv_callback cb) {
-	if (listen(socketfd, BACKLOG) == -1) {
+void sws::server::start_http() {
+	if (listen(socketfd, config::BACKLOG) == -1) {
 		throw std::runtime_error("Failed to listen");
 	}
 
 	// TODO: Handle child processes
 
-	struct sockaddr client_addr;
+	sockaddr client_addr;
 	socklen_t addrlen = sizeof(client_addr);
 
-	LOG_PRINTF("Listening for incoming requests...\n");
+	log_print("[*] Listening for incoming requests\n");
 
 	while (true) {
 		int recv_sockfd = accept(socketfd, &client_addr, &addrlen);
@@ -38,22 +41,30 @@ void sws::server::receive(void *buf, int len, recv_callback cb) {
 			throw std::runtime_error("Failed to accept connection");
 		}
 
-		int bytes_recvd = recv(recv_sockfd, buf, len, 0);
-		if (bytes_recvd == -1) {
-			throw std::runtime_error("Error receiving bytes");
-		}
+		log_print("[*] Receiving a TCP connection from ");
+		log_addr(&client_addr);
+		log_print(":\n");
 
-		LOG_PRINTF("Received request from ");
-		LOG_ADDR(&client_addr);
-		LOG_PRINTF("\n");
+		int pos = 0;
+		int bytes_recvd = 0;
 
-		cb(&client_addr, bytes_recvd);
+		do {
+			bytes_recvd = recv(recv_sockfd, buf + pos, config::BUFSIZE - pos, 0);
+
+			if constexpr (config::LOG_TO_STDOUT) {
+				fwrite(buf + pos, 1, bytes_recvd, stdout);
+			}
+
+			pos = (pos + bytes_recvd) % config::BUFSIZE;
+		} while (bytes_recvd > 0);
+
+		log_print("[*] Connection terminated\n");
 	}
 }
 
-void sws::server::bind_to_first_possible(struct addrinfo *suitable_addresses) {
+void sws::server::bind_to_first_possible(addrinfo *suitable_addresses) {
 	socketfd = -1;
-	for (struct addrinfo *ai = suitable_addresses; ai != NULL; ai = ai->ai_next) {
+	for (addrinfo *ai = suitable_addresses; ai != NULL; ai = ai->ai_next) {
 		socketfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (socketfd == -1) {
 			continue;
@@ -65,9 +76,9 @@ void sws::server::bind_to_first_possible(struct addrinfo *suitable_addresses) {
 			continue;
 		}
 
-		LOG_PRINTF("Binding to ");
-		LOG_ADDR(ai->ai_addr);
-		LOG_PRINTF("...\n");
+		log_print("[*] Successfully bound to ");
+		log_addr(ai->ai_addr);
+		log_print("\n");
 
 		break;
 	}
@@ -75,7 +86,7 @@ void sws::server::bind_to_first_possible(struct addrinfo *suitable_addresses) {
 
 addrinfo* sws::get_suitable_addresses(const char *service) {
 	struct addrinfo hints, *res;
-	memset(&hints, 0, sizeof(hints)); // Zefo all fields
+	memset(&hints, 0, sizeof(hints)); // Zero all fields
 
 	hints.ai_family = AF_UNSPEC; // Accept both IPv4 and IPv6
 	hints.ai_socktype = SOCK_STREAM; // Request a TCP stream socket

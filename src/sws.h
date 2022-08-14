@@ -12,19 +12,20 @@
 #include "log.h"
 
 namespace sws {
-	typedef void (*recv_callback)(struct sockaddr *, int);
+	typedef void (*recv_callback)(sockaddr*, int);
 
 	class server {
 	public:
 		server(char const *service);
 		~server();
 
-		void receive(void *buf, int len, recv_callback cb);
+		void start_http();
 
 	private:
 		int socketfd;
+		char *buf;
 
-		void bind_to_first_possible(struct addrinfo *suitable_addresses);
+		void bind_to_first_possible(addrinfo *suitable_addresses);
 	};
 
 	addrinfo* get_suitable_addresses(const char *service);

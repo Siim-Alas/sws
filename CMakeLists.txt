@@ -1,7 +1,9 @@
 
 cmake_minimum_required(VERSION 3.10)
 
+set(CMAKE_CXX_STANDARD 17)
+
 project(sws)
 
-add_executable(sws src/main.h src/main.cpp src/sws.h src/sws.cpp)
+add_executable(sws src/config.h src/log.cpp src/log.h src/main.cpp src/main.h src/sws.cpp src/sws.h)
 
