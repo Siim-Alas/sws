@@ -20,7 +20,7 @@ sws::tcp_listener::~tcp_listener() {
 	close(socketfd);
 }
 
-void sws::tcp_listener::start_listening(recv_callback on_receive) {
+void sws::tcp_listener::start_listening(std::function<void(sockaddr&, tcp_connection&)> on_receive) {
 	if (listen(socketfd, config::BACKLOG) == -1) {
 		throw std::runtime_error("Failed to listen");
 	}

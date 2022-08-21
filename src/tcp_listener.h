@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstring>
+#include <functional>
 #include <netdb.h>
 #include <stdexcept>
 #include <sys/socket.h>
@@ -13,12 +14,10 @@
 namespace sws {
 	class tcp_listener {
 	public:
-		typedef void (*recv_callback)(sockaddr&, tcp_connection&);
-
 		tcp_listener(const char *service);
 		~tcp_listener();
 
-		void start_listening(recv_callback on_receive);
+		void start_listening(std::function<void(sockaddr&, tcp_connection&)> on_receive);
 
 	private:
 		int socketfd;
